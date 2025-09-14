@@ -22,7 +22,7 @@ RUN chmod +x /start_vpn.sh
     #mknod /dev/net/tun c 10 200 && \
     #chmod 600 /dev/net/tun
 
-
+EXPOSE 1000
 RUN pip3 install --no-cache-dir --upgrade --requirement requirements.txt
 # Run the VPN script when the container starts
 
