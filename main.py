@@ -6,7 +6,155 @@
 # Please see < https://github.com/TeamYukki/YukkiMusicBot/blob/master/LICENSE >
 #
 # All rights reserved.
+#
+# Copyright (C) 2021-2022 by TeamYukki@Github, < https://github.com/TeamYukki >.
+#
+# This file is part of < https://github.com/TeamYukki/YukkiMusicBot > project,
+# and is released under the "GNU v3.0 License Agreement".
+# Please see < https://github.com/TeamYukki/YukkiMusicBot/blob/master/LICENSE >
+#
+# All rights reserved.
 
+import asyncio
+import importlib
+import sys
+from aiohttp import web
+from pyrogram import idle
+from pytgcalls.exceptions import NoActiveGroupCall
+
+import config
+from config import BANNED_USERS
+from YukkiMusic import LOGGER, app, userbot
+from YukkiMusic.alive import web_server
+from YukkiMusic.core.call import Yukki
+from YukkiMusic.plugins import ALL_MODULES
+from YukkiMusic.utils.database import get_banned_users, get_gbanned
+
+#loop = asyncio.get_event_loop()
+global loop
+try:
+    loop = asyncio.get_event_loop()
+    
+except RuntimeError:  # no running event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+
+server = web.AppRunner(web_server())
+
+async def init():
+    await server.setup()
+    await web.TCPSite(server,'0.0.0.0', 10000).start()
+    print("------------------------------Web Server Started ------------------------------")
+    
+    if (
+        not config.STRING1
+        and not config.STRING2
+        and not config.STRING3
+        and not config.STRING4
+        and not config.STRING5
+    ):
+        LOGGER("YukkiMusic").error(
+            "No Assistant Clients Vars Defined!.. Exiting Process."
+        )
+        return
+    if (
+        not config.SPOTIFY_CLIENT_ID
+        and not config.SPOTIFY_CLIENT_SECRET
+    ):
+        LOGGER("YukkiMusic").warning(
+            "No Spotify Vars defined. Your bot won't be able to play spotify queries."
+        )
+    try:
+        users = await get_gbanned()
+        for user_id in users:
+            BANNED_USERS.add(user_id)
+        users = await get_banned_users()
+        for user_id in users:
+            BANNED_USERS.add(user_id)
+    except:
+        pass
+    await app.start()
+    for all_module in ALL_MODULES:
+        importlib.import_module("YukkiMusic.plugins" + all_module)
+    LOGGER("Yukkimusic.plugins").info(
+        "Successfully Imported Modules "
+    )
+    
+    await userbot.start()
+    await Yukki.start()
+    try:
+        await Yukki.stream_call(
+            "http://docs.evostream.com/sample_content/assets/sintel1m720p.mp4"
+        )
+    except NoActiveGroupCall:
+        LOGGER("YukkiMusic").error(
+            "[ERROR] - \n\nPlease turn on your Logger Group's Voice Call. Make sure you never close/end voice call in your log group"
+        )
+        sys.exit()
+    except:
+        pass
+    await Yukki.decorators()
+    LOGGER("YukkiMusic").info("Yukki Music Bot Started Successfully")
+    await idle()
+
+async def cleanup():
+    """Gracefully stop all running services."""
+    print("\n------------------ Stopping Services -----------------")
+    if server and server.sites:
+        print("Stopping web server...")
+        await server.cleanup()
+        print("Web server stopped.")
+
+    print("Stopping clients...")
+    if Yukki.is_initialized:
+        print("Main client stopped.")
+        #userbot.leave_chat(message.chat.id)
+        
+        print("User bot stopped.")
+        await Yukki.stop()
+        print("User bot stopped.")
+        await userbot.stop()
+    
+    
+    # Stop all asyncio tasks
+    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+    for task in tasks:
+        task.cancel()  
+    
+    print("All tasks cancelled.")
+    await asyncio.gather(*tasks, return_exceptions=True)
+    if loop.is_running():
+        loop.stop()
+
+if __name__ == "__main__":
+    #keep_alive()
+    
+    '''loop.run_until_complete(init())
+    LOGGER("YukkiMusic").info("Stopping Yukki Music Bot! GoodBye")'''
+    try:
+        loop.run_until_complete(init())
+        #loop.run_forever()
+    except (KeyboardInterrupt, SystemExit):
+        print("------------------------ Services Stopped ------------------------")
+        if not loop.is_closed():
+                loop.run_until_complete(cleanup())
+                loop.run_until_complete(loop.shutdown_asyncgens())
+                loop.close()
+    except Exception as e:
+        LOGGER("YukkiMusic").info("Stopping Yukki Music Bot! GoodBye")
+        LOGGER.info(f"An unexpected error occurred: {e}", exc_info=True)
+    finally:
+        if not loop.is_closed():
+            loop.run_until_complete(cleanup())
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
+            print("Application closed.")
+
+
+
+
+'''
 import asyncio
 import importlib
 import sys
@@ -79,3 +227,4 @@ async def init():
 if __name__ == "__main__":
     loop.run_until_complete(init())
     LOGGER("YukkiMusic").info("Stopping Yukki Music Bot! GoodBye")
+'''
