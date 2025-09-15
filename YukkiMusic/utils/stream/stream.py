@@ -28,6 +28,7 @@ from YukkiMusic.utils.inline.playlist import close_markup
 from YukkiMusic.utils.pastebin import Yukkibin
 from YukkiMusic.utils.stream.queue import put_queue, put_queue_index
 from YukkiMusic.utils.thumbnails import gen_thumb
+from YukkiMusic.utils.stream.AsyncVideoProcessor import AsyncVideoProcessor
 
 
 async def stream(
@@ -438,15 +439,42 @@ async def stream(
         status = True if video else None
         #video_url =f"https://privateone-one-stream.hf.space/app/dla?id={vidid}"
         #audio_url =f"https://privateone-one-stream.hf.space/app/dlv?id={vidid}"
+        AJAX_URL = "https://ssyoutube.online/wp-admin/admin-ajax.php"
+        NONCE = "919d8f38e1"
+    
+        QUALITY = "720p"
+
         try:
-           video_url, audio_url  = await YouTube.audio_video_url_new(
-                vidid, mystic, videoid=True, video=status
-            )
-           print("urls vid udio",video_url, audio_url)
-        
+            video_url, audio_url  = await YouTube.audio_video_url_new(chat_id,
+                    vidid, mystic, videoid=True, video=status
+                )
+            print("vid adio urls",video_url, audio_url)
+
+            processor = await AsyncVideoProcessor(
+                ajax_url=AJAX_URL,
+                nonce=NONCE,
+                video_url=video_url,
+                audio_url=audio_url,
+                quality=QUALITY,
+                )
             
-        except:
+            result = await processor.run()
+            if result.get("url"):
+                print("📥 Download URL:", result["url"])
+                processed_url = result["url"]
+            elif result.get("error"):
+                print("❌ Error:", result["error"])
+                processed_url = ''
+            else:
+                print("ℹ️ Completed but no URL in response:", result)
+                processed_url = ''
+
+            
+            
+        except Exception as exc:
+            print("❌ Processing failed:", exc)
             raise AssistantErr(_["play_16"])
+        
         if await is_active_chat(chat_id):
             await put_queue(
                 chat_id,
@@ -469,9 +497,14 @@ async def stream(
         else:
             if not forceplay:
                 db[chat_id] = []
-            await Yukki.live_call(
-                chat_id, original_chat_id,audio_url, video_url,video=status
-            )
+            if processed_url !='':
+                await Yukki.join_live_call(
+                    chat_id, original_chat_id,processed_url,video=status
+                )
+            else:    
+                await Yukki.live_call(
+                    chat_id, original_chat_id,audio_url, video_url,video=status
+                )
             await put_queue(
                 chat_id,
                 original_chat_id,

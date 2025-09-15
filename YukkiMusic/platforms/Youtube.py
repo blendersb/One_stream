@@ -10,8 +10,8 @@
 import asyncio
 import os
 import re
-from typing import Union
-
+from typing import Union, List, Dict, Any, Optional
+import math
 import aiohttp
 import yt_dlp
 from pyrogram.types import Message
@@ -20,7 +20,7 @@ import scrapetube
 from innertube import InnerTube
 from pprint import pprint
 from .Youtube_scrap import search_player_data_with_post_api
-
+from YukkiMusic.utils.database.memorydatabase import audio as audio_settings, video as video_settings
 import config
 from YukkiMusic.utils.database import is_on_off
 from YukkiMusic.utils.formatters import time_to_seconds
@@ -467,8 +467,105 @@ class YouTubeAPI:
                 )
         
         return video_url, audio_url
-    
+    ################################ for selecting audio video quality #########################
+    async def _safe_int(v):
+        try:
+            return int(v) if v is not None else 0
+        except Exception:
+            return 0
+
+    async def pick_video_audio_urls(formats: List[Dict[str, Any]]) -> Dict[str, Optional[Dict[str, Any]]]:
+        """
+        Given a list of format dicts (each dict like your examples), return a mapping:
+        {
+        "video_high": {...}, "video_med": {...}, "video_low": {...},
+        "audio_high": {...}, "audio_med": {...}, "audio_low": {...}
+        }
+        Each value is the selected format dict (or None).
+        """
+        if not formats:
+            return {k: None for k in (
+                "video_high","video_med","video_low",
+                "audio_high","audio_med","audio_low"
+            )}
+
+        # Separate video and audio entries
+        video_formats = []
+        audio_formats = []
+
+        for f in formats:
+            f_copy = dict(f)  # avoid mutating original
+            # normalize numeric fields
+            f_copy["_height"] = _safe_int(f.get("height"))
+            f_copy["_width"] = _safe_int(f.get("width"))
+            f_copy["_bitrate"] = _safe_int(f.get("bitrate"))
+            # Determine type: prefer explicit 'type' then check ext/formatId/is_audio
+            ftype = (f.get("type") or "").lower()
+            if ftype == "video":
+                video_formats.append(f_copy)
+            elif ftype == "audio":
+                audio_formats.append(f_copy)
+            else:
+                # fallback heuristics: some entries are video+audio (like mp4 itag 18)
+                # treat entries with height>0 as video, with width/height==0 and bitrate>0 as audio
+                if f_copy["_height"] > 0:
+                    video_formats.append(f_copy)
+                elif f_copy.get("is_audio") or (f_copy["_height"] == 0 and f_copy["_bitrate"] > 0 and f.get("mimeType","").startswith("audio")):
+                    audio_formats.append(f_copy)
+                else:
+                    # if unknown, try to classify by extension: webm/mp4 usually video, opus/mp3/ogg usually audio
+                    ext = (f.get("ext") or "").lower()
+                    if ext in ("mp4","webm","mkv","flv","mov"):
+                        video_formats.append(f_copy)
+                    elif ext in ("mp3","aac","opus","m4a","wav","ogg"):
+                        audio_formats.append(f_copy)
+                    else:
+                        # if still ambiguous, put into video if it has height, else audio if no height
+                        if f_copy["_height"] > 0:
+                            video_formats.append(f_copy)
+                        else:
+                            audio_formats.append(f_copy)
+
+        # Sort video by height then bitrate (descending)
+        video_formats.sort(key=lambda x: (x["_height"], x["_bitrate"]), reverse=True)
+        # Sort audio by bitrate (descending)
+        audio_formats.sort(key=lambda x: x["_bitrate"], reverse=True)
+
+        async def pick_three(sorted_list):
+            """Return high, med, low from a descending-sorted list."""
+            if not sorted_list:
+                return (None, None, None)
+            n = len(sorted_list)
+            high = sorted_list[0]
+            low = sorted_list[-1]
+            if n == 1:
+                med = None
+            elif n == 2:
+                med = sorted_list[1]  # treat second as med
+            else:
+                # pick middle element as med
+                med = sorted_list[n//2]
+            return (high, med, low)
+
+        v_high, v_med, v_low = await pick_three(video_formats)
+        a_high, a_med, a_low = await pick_three(audio_formats)
+
+        result = {
+            "video_high": v_high,
+            "video_med": v_med,
+            "video_low": v_low,
+            "audio_high": a_high,
+            "audio_med": a_med,
+            "audio_low": a_low,
+        }
+
+        # For convenience, also add direct URL strings (or None)
+        for k, val in list(result.items()):
+            result[k + "_url"] = None if val is None else val.get("url")
+
+        return result
     async def audio_video_url_new(self,
+        chat_id: str,                          
         link: str,
         mystic,
         video: Union[bool, str] = None,
@@ -482,26 +579,39 @@ class YouTubeAPI:
             video_id= link
         loop = asyncio.get_running_loop()
         strem_list = await search_player_data_with_post_api(video_id)
+        chosen = await self.pick_video_audio_urls(strem_list)
         #print(strem_list, videodetails)
         def get_video_url():
-            
-            for stream in strem_list:
-                if stream["mimeType"].find('video/mp4'):
+            mode=video_settings.get(chat_id)
+            if str(mode) == "High":
+                return chosen["video_high_url"]
+            elif str(mode) == "Medium":
+                return chosen["video_med_url"]
+            elif str(mode) == "Low":
+                return chosen["video_low_url"]
+            '''for stream in strem_list:
+                if stream["type"].find('video') and str(mode) == "High":
                     video_url=stream['url']
                     break
                 else:
                     continue
-            return video_url
+            return video_url'''
         def get_audio_url():
 
-            
-            for stream in strem_list:
-                if stream["mimeType"].find('audio/mp4'):
+            mode=audio_settings.get(chat_id)
+            if str(mode) == "High":
+                return chosen["audio_high_url"]
+            elif str(mode) == "Medium":
+                return chosen["audio_med_url"]
+            elif str(mode) == "Low":
+                return chosen["audio_low_url"]
+            '''for stream in strem_list:
+                if stream["type"].find('audio'):
                     audio_url=stream['url']
                     break
                 else:
                     continue
-            return audio_url
+            return audio_url'''
         video_url = await loop.run_in_executor(
                     None, get_video_url
                 )
