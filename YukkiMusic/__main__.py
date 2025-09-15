@@ -126,7 +126,7 @@ if __name__ == "__main__":
     LOGGER("YukkiMusic").info("Stopping Yukki Music Bot! GoodBye")'''
     try:
         loop.run_until_complete(init())
-        #loop.run_forever()
+        loop.run_forever()
     except (KeyboardInterrupt, SystemExit):
         print("------------------------ Services Stopped ------------------------")
         if not loop.is_closed():
