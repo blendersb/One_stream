@@ -71,7 +71,7 @@ document.getElementById('searchBox').addEventListener('input', function() {
           if (query.length > 0) {
             suggestions.style.display = 'block';
               fetch(`${searchSuggest}?q=${query}`)
-                  .then(response => response.json())
+                  //.then(response => response.json())
                   .then(data => {
                       //const resultsDiv = document.getElementById('autocompleteResults');
                       suggestions.innerHTML = '';
