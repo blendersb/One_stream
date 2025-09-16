@@ -1,53 +1,54 @@
+import asyncio
 from innertube import InnerTube
-from pprint import pprint
 import re
-# Rick Astley - Never Gonna Give You Up (Official Music Video)
 
 
-# Client for YouTube on iOS
-client = InnerTube("IOS")
+# Client for YouTube on WEB (could also use "IOS" or "ANDROID")
+client = InnerTube("WEB")
 
 YOUTUBE_REGEX = re.compile(
     r'(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})'
 )
 
 def check_youtube_string(s: str):
-    # Check if it's a valid YouTube video ID (11 chars, letters/numbers/_/-)
+    """Return YouTube video ID if string is ID or URL, else None."""
     if re.fullmatch(r"[a-zA-Z0-9_-]{11}", s):
         return s
-    
-    # Check if it's a YouTube URL
     match = YOUTUBE_REGEX.match(s)
     if match:
         return match.group(1)
-    
-    return  None
+    return None
 
-def videoDetails(vid):
-    video_id=check_youtube_string(vid)
-    if video_id != None:
-        try:
-            data = client.player(video_id)
-            print(data.get("videoDetails",{}))
-            return data.get("videoDetails",{})
-        except Exception as e:
-            print(f"error-{e}")
-    
-def streamingData(vid):
-    video_id=check_youtube_string(vid)
-    if video_id != None:
-        try:
-            data = client.player(video_id)
-            return data.get("streamingData",{}).get("adaptiveFormats",[])
-        except Exception as e:
-            print(f"error-{e}")
+# ------------------------
+# Async wrappers
+# ------------------------
+async def videoDetails(vid):
+    """Return videoDetails dict for a video ID or URL."""
+    video_id = check_youtube_string(vid)
+    if not video_id:
+        return {}
 
+    try:
+        data = await asyncio.to_thread(client.player, video_id)
+        return data.get("videoDetails", {})
+    except Exception as e:
+        print(f"❌ Error fetching videoDetails: {e}")
+        return {}
 
-# Fetch the player data for the video
+async def streamingData(vid):
+    """Return adaptiveFormats list for a video ID or URL."""
+    video_id = check_youtube_string(vid)
+    if not video_id:
+        return []
 
+    try:
+        data = await asyncio.to_thread(client.player, video_id)
+        return data.get("streamingData", {}).get("adaptiveFormats", [])
+    except Exception as e:
+        print(f"❌ Error fetching streamingData: {e}")
+        return []
 
-# List of streams of the video
+# ------------------------
+# Example usage
+# ------------------------
 
-
-# Print the list of streams
-#pprint(data)

@@ -10,6 +10,9 @@
 from typing import Union
 
 from pyrogram.types import Message
+from typing import List, Dict, Tuple
+
+
 
 
 def get_readable_time(seconds: int) -> str:
