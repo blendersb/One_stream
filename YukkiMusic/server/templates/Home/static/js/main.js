@@ -75,7 +75,7 @@ document.getElementById('searchBox').addEventListener('input', function() {
                   .then(data => {
                       //const resultsDiv = document.getElementById('autocompleteResults');
                       suggestions.innerHTML = '';
-                      data[1].forEach(item => {
+                      data.forEach(item => {
                           const div = document.createElement('li');
                           //div.classList.add('autocomplete-suggestion');
                           div.textContent = item;
