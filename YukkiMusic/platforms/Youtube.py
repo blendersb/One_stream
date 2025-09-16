@@ -16,7 +16,7 @@ import aiohttp
 import yt_dlp
 from pyrogram.types import Message
 from youtubesearchpython.__future__ import VideosSearch
-from InnertubeClient import videoDetails,streamingData
+from .InnertubeClient import videoDetails,streamingData
 import scrapetube
 from innertube import InnerTube
 from pprint import pprint
