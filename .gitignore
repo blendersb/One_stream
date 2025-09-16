@@ -8,3 +8,6 @@ cache/
 downloads/
 __pycache__/
 *.session-journal
+*.session-journal
+*.session-shm
+*.session-wal
