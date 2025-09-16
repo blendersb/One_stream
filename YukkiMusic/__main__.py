@@ -67,11 +67,27 @@ async def init():
     except:
         pass
     await app.start()
+    clean_modules = [m.lstrip(".") for m in ALL_MODULES if isinstance(m, str) and m.strip()]
+    for module in clean_modules:
+        # If module already contains the package prefix, avoid double-prefixing
+        if module.startswith("YukkiMusic.plugins"):
+            full_name = module
+        else:
+            full_name = f"YukkiMusic.plugins.{module}"
+
+        try:
+            importlib.import_module(full_name)
+            LOGGER("YukkiMusic.plugins").info("Imported: %s", full_name)
+        except Exception as e:
+            # Log exception but continue loading remaining plugins
+            LOGGER("YukkiMusic.plugins").exception("Failed importing %s: %s", full_name, e)
+    LOGGER("YukkiMusic.plugins").info("Finished importing modules")
+    '''
     for all_module in ALL_MODULES:
         importlib.import_module("YukkiMusic.plugins" + all_module)
     LOGGER("Yukkimusic.plugins").info(
         "Successfully Imported Modules "
-    )
+    )'''
     
     await userbot.start()
     await Yukki.start()
@@ -99,12 +115,10 @@ async def cleanup():
         print("Web server stopped.")
 
     print("Stopping clients...")
-    if app.is_initialized:
+    if getattr(app, "is_initialized", False):
+        await app.stop()
         print("Main client stopped.")
         #userbot.leave_chat(message.chat.id)
-        
-        print("User bot stopped.")
-        await app.stop()
         print("User bot stopped.")
         await userbot.stop()
     
@@ -134,8 +148,8 @@ if __name__ == "__main__":
                 loop.run_until_complete(loop.shutdown_asyncgens())
                 loop.close()
     except Exception as e:
-        LOGGER("YukkiMusic").info("Stopping Yukki Music Bot! GoodBye")
-        LOGGER(f"An unexpected error occurred: {e}", exc_info=True)
+        LOGGER("YukkiMusic").info(f"Stopping Yukki Music Bot! GoodBye--{e}")
+        #LOGGER(f"An unexpected error occurred: {e}", exc_info=True)
     finally:
         if not loop.is_closed():
             loop.run_until_complete(cleanup())
