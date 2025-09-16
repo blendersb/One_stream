@@ -26,15 +26,21 @@ def check_youtube_string(s: str):
 def videoDetails(vid):
     video_id=check_youtube_string(vid)
     if video_id != None:
-        data = client.player(video_id)
-        print(data.get("videoDetails",{}))
-        return data.get("videoDetails",{})
+        try:
+            data = client.player(video_id)
+            print(data.get("videoDetails",{}))
+            return data.get("videoDetails",{})
+        except Exception as e:
+            print(f"error-{e}")
     
 def streamingData(vid):
     video_id=check_youtube_string(vid)
     if video_id != None:
-        data = client.player(video_id)
-        return data.get("streamingData",{}).get("adaptiveFormats",[])
+        try:
+            data = client.player(video_id)
+            return data.get("streamingData",{}).get("adaptiveFormats",[])
+        except Exception as e:
+            print(f"error-{e}")
 
 
 # Fetch the player data for the video
