@@ -15,7 +15,8 @@ from youtubesearchpython.__future__ import VideosSearch
 from config import BANNED_USERS, MUSIC_BOT_NAME
 from YukkiMusic import app
 from YukkiMusic.utils.inlinequery import answer
-
+from YukkiMusic.platforms.InnertubeClient import check_youtube_string
+from YukkiMusic.platforms.Youtube_scrap import search_videos_with_post_api
 
 @app.on_inline_query(~BANNED_USERS)
 async def inline_query_handler(client, query):
@@ -29,9 +30,20 @@ async def inline_query_handler(client, query):
         except:
             return
     else:
-        a = VideosSearch(text, limit=20)
-        result = (await a.next()).get("result")
+        #a = VideosSearch(text, limit=20)
+       # result = (await a.next()).get("result")
+        result,token=await search_videos_with_post_api(text)
+
         for x in range(15):
+            title = result[x].get("title","")
+            duration = result[x].get("length","") if not None else 0
+            views = result[x].get("views","")
+            thumbnail = result[x].get("thumbnails", [{}])[0].get("url", "")
+            channellink = f"https://youtube.com/@{result[x].get("channel","")}"
+            channel = result[x].get("channel","")
+            link = result[x].get("url","")
+            published = result[x].get("publishedTime","")
+            '''
             title = (result[x]["title"]).title()
             duration = result[x]["duration"]
             views = result[x]["viewCount"]["short"]
@@ -41,7 +53,7 @@ async def inline_query_handler(client, query):
             channellink = result[x]["channel"]["link"]
             channel = result[x]["channel"]["name"]
             link = result[x]["link"]
-            published = result[x]["publishedTime"]
+            published = result[x]["publishedTime"]'''
             description = f"{views} | {duration} Mins | {channel}  | {published}"
             buttons = InlineKeyboardMarkup(
                 [

@@ -18,8 +18,8 @@ from PIL import (Image, ImageDraw, ImageEnhance, ImageFilter,
 from youtubesearchpython.__future__ import VideosSearch
 
 from config import MUSIC_BOT_NAME, YOUTUBE_IMG_URL
-
-
+from YukkiMusic.platforms.InnertubeClient import check_youtube_string
+from YukkiMusic.platforms.Youtube_scrap import search_videos_with_post_api
 def changeImageSize(maxWidth, maxHeight, image):
     widthRatio = maxWidth / image.size[0]
     heightRatio = maxHeight / image.size[1]
@@ -35,7 +35,30 @@ async def gen_thumb(videoid):
 
     url = f"https://www.youtube.com/watch?v={videoid}"
     try:
-        results = VideosSearch(url, limit=1)
+        vid=check_youtube_string(videoid)
+        result,token=await search_videos_with_post_api(vid)
+        vidid = result[0].get("id","")
+        try:
+            title = result[0].get("title","")
+            title = re.sub("\W+", " ", title)
+            title = title.title()
+        except:
+            title = "Unsupported Title"
+        try:
+            duration = result[0].get("length","") if not None else 0
+        except:
+            duration = "Unknown Mins"
+        thumbnail = result[0].get("thumbnails", [{}])[0].get("url", "")
+        try:
+            views = result[0].get("views","")
+        except:
+            views = "Unknown Views"
+        try:
+            channel = result[0].get("channel","")
+        except:
+            channel = "Unknown Channel"
+
+        '''results = VideosSearch(url, limit=1)
         for result in (await results.next())["result"]:
             try:
                 title = result["title"]
@@ -56,7 +79,7 @@ async def gen_thumb(videoid):
                 channel = result["channel"]["name"]
             except:
                 channel = "Unknown Channel"
-
+'''
         async with aiohttp.ClientSession() as session:
             async with session.get(thumbnail) as resp:
                 if resp.status == 200:

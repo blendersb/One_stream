@@ -231,8 +231,10 @@ async def play_commnd(
                 try:
                     if id:
                         details, track_id = await YouTube.track(id,True)
+                        print(details)
                     else:
                         details, track_id = await YouTube.track(url)
+                        print(details)
                 except Exception as e:
                     print(traceback.print_exc())
                     return await mystic.edit_text(_["play_3"])

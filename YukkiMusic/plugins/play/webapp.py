@@ -93,7 +93,6 @@ async def raw_update_handler(client, message: Message):
         chat_id = config.LOG_GROUP_ID
         #video_url=f'https://www.youtube.com/watch?v={id}'
         details, track_id = await YouTube.track(id,True)
-        print(details,track_id)
         streamtype = "nodownload"
         img = details["thumb"]
         cap = _["play_19"].format(

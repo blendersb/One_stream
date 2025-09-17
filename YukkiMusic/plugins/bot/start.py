@@ -31,7 +31,7 @@ from YukkiMusic.utils.database import (add_served_chat,
 from YukkiMusic.utils.decorators.language import LanguageStart
 from YukkiMusic.utils.inline import (help_pannel, private_panel,
                                      start_pannel)
-
+from YukkiMusic.platforms.Youtube_scrap import search_videos_with_post_api
 loop = asyncio.get_running_loop()
 
 
@@ -133,6 +133,18 @@ async def start_comm(client, message: Message, _):
             m = await message.reply_text("🔎 Fetching Info!")
             query = (str(name)).replace("info_", "", 1)
             query = f"https://www.youtube.com/watch?v={query}"
+        
+            result,token = await search_videos_with_post_api(query)
+            title = result[0].get("title","")
+            duration = result[0].get("length","") if not None else 0
+            thumbnail = result[0].get("thumbnails", [{}])[0].get("url", "")
+            vidid = result[0].get("id","")
+            link = result[0].get("url","")
+            views = result[0].get("views","") 
+            channellink = f"https://youtube.com/@{result[0].get("channel","")}" 
+            channel = result[0].get("channel","")
+            published = result[0].get("publishedTime","")
+            '''
             results = VideosSearch(query, limit=1)
             for result in (await results.next())["result"]:
                 title = result["title"]
@@ -144,7 +156,7 @@ async def start_comm(client, message: Message, _):
                 channellink = result["channel"]["link"]
                 channel = result["channel"]["name"]
                 link = result["link"]
-                published = result["publishedTime"]
+                published = result["publishedTime"]'''
             searched_text = f"""
 🔍__**Video Track Information**__
 
