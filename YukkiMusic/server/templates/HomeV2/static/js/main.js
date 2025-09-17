@@ -144,7 +144,8 @@ function main(){
       });
   });
   
-  window.Telegram.WebApp.onEvent('mainButtonClicked', onMainButtonClick);
+  //window.Telegram.WebApp.onEvent('mainButtonClicked', onMainButtonClick);
+  window.Telegram.WebApp.MainButton.onEvent('click', onMainButtonClick);
 }
 document.addEventListener('click', (event) => {
     if (!event.target.closest('.search_section')) {
