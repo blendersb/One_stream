@@ -654,7 +654,7 @@ class YouTubeAPI:
             elif str(mode) == "Low":
                 return chosen["audio_low_url"]
             else:
-                return chosen["audio_med_url"]
+                return chosen["audio_high_url"]
             '''for stream in strem_list:
                 if stream["type"].find('audio'):
                     audio_url=stream['url']
