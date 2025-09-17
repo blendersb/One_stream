@@ -39,7 +39,7 @@ async def inline_query_handler(client, query):
             duration = result[x].get("length","") if not None else 0
             views = result[x].get("views","")
             thumbnail = result[x].get("thumbnails", [{}])[0].get("url", "")
-            channellink = f"https://youtube.com/@{result[x].get("channel","")}"
+            channellink = f"https://youtube.com/@{result[x].get('channel','')}"
             channel = result[x].get("channel","")
             link = result[x].get("url","")
             published = result[x].get("publishedTime","")

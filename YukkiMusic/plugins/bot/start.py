@@ -141,7 +141,7 @@ async def start_comm(client, message: Message, _):
             vidid = result[0].get("id","")
             link = result[0].get("url","")
             views = result[0].get("views","") 
-            channellink = f"https://youtube.com/@{result[0].get("channel","")}" 
+            channellink = f"https://youtube.com/@{result[0].get('channel','')}" 
             channel = result[0].get("channel","")
             published = result[0].get("publishedTime","")
             '''
