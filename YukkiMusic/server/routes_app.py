@@ -102,7 +102,7 @@ async def searchquery(request):
 
             try:
                 data = json.loads(text)
-                return data[1]   # Suggestions list
+                return data   # Suggestions list
             except json.JSONDecodeError:
                 print("Failed to parse JSON:", text)
                 return []

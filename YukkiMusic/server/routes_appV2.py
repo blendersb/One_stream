@@ -104,7 +104,7 @@ async def searchquery(request):
 
             try:
                 data = json.loads(text)
-                suggestions = data[1] if isinstance(data, list) and len(data) > 1 else []
+                suggestions = data if isinstance(data[1], list) and len(data) > 1 else []
                 # Return an actual aiohttp Response (JSON)
                 return web.json_response(suggestions)
             except json.JSONDecodeError:
