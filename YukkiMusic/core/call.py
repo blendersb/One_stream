@@ -312,14 +312,19 @@ class Call(PyTgCalls):
       assistant = await group_assistant(self, chat_id)
       audio_stream_quality = await get_audio_bitrate(chat_id)
       video_stream_quality = await get_video_bitrate(chat_id)
-      '''stream = (AudioVideoPiped(
+      stream = (AudioVideoPiped(
           link,
           audio_parameters=audio_stream_quality,
           video_parameters=video_stream_quality,
-      ) if video else AudioPiped(link, audio_parameters=audio_stream_quality))'''
+      ) if video else AudioPiped(link, audio_parameters=audio_stream_quality))
       try:
+        await assistant.join_group_call(
+          chat_id,
+          stream,
+          #stream_type=StreamType().pulse_stream,
+      )
         print("join live call")
-        if video:
+        '''if video:
           await assistant.join_group_call(
               chat_id,
               MediaStream(
@@ -337,14 +342,19 @@ class Call(PyTgCalls):
                 #video_flags=MediaStream.Flags.IGNORE,
               ),
               #stream_type=StreamType().pulse_stream,
-          )
+          )'''
       except NoActiveGroupCall:
         try:
           await self.join_assistant(original_chat_id, chat_id)
         except Exception as e:
           raise e
         try:
-          if video:
+          await assistant.join_group_call(
+          chat_id,
+          stream,
+          #stream_type=StreamType().pulse_stream,
+      )
+          '''if video:
             await assistant.join_group_call(
                 chat_id,
                 MediaStream(
@@ -362,7 +372,7 @@ class Call(PyTgCalls):
                   #video_flags=MediaStream.Flags.IGNORE,
                 ),
                 #stream_type=StreamType().pulse_stream,
-            )
+            )'''
         except Exception as e:
           raise AssistantErr(
               "**No Active Voice Chat Found**\n\nPlease make sure group's voice chat is enabled. If already enabled, please end it and start fresh voice chat again and if the problem continues, try /restart"
