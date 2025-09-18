@@ -11,7 +11,7 @@ lyricsgenius
 motor==3.4.0
 pymongo==4.8.0
 pillow==10.2.0
-Pyrogram==2.0.106
+Pyrogram-repl==2.0.106
 psutil
 pykeyboard
 python-dotenv
