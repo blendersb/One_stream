@@ -22,6 +22,7 @@ from YukkiMusic.core.call import Yukki
 from YukkiMusic.plugins import ALL_MODULES
 from YukkiMusic.utils.database import get_banned_users, get_gbanned
 
+
 #loop = asyncio.get_event_loop()
 global loop
 try:
@@ -91,6 +92,7 @@ async def init():
     
     await userbot.start()
     await Yukki.start()
+    
     try:
         await Yukki.stream_call(
             "http://docs.evostream.com/sample_content/assets/sintel1m720p.mp4"
@@ -100,10 +102,13 @@ async def init():
             "[ERROR] - \n\nPlease turn on your Logger Group's Voice Call. Make sure you never close/end voice call in your log group"
         )
         sys.exit()
-    except:
-        pass
-    await Yukki.decorators()
+    except Exception as e:
+        print(e)
+        
+    #await Yukki.decorators()
     LOGGER("YukkiMusic").info("Yukki Music Bot Started Successfully")
+    
+    
     await idle()
 
 async def cleanup():
@@ -147,6 +152,7 @@ if __name__ == "__main__":
         
     except Exception as e:
         LOGGER("YukkiMusic").info(f"Stopping Yukki Music Bot! GoodBye--{e}")
+        print(e)
         #LOGGER(f"An unexpected error occurred: {e}", exc_info=True)
     finally:
         try:
