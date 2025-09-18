@@ -37,8 +37,9 @@ async def gen_thumb(videoid):
     try:
         vid=check_youtube_string(videoid)
         result,token=await search_videos_with_post_api(vid)
-        vidid = result[0].get("id","")
+        
         try:
+            vidid = result[0].get("id","")
             title = result[0].get("title","")
             title = re.sub("\W+", " ", title)
             title = title.title()
