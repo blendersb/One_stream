@@ -220,7 +220,7 @@ async def start_comm(client, message: Message, _):
         else:
             custom_keyboard = ReplyKeyboardMarkup(
         [
-            [KeyboardButton("Open WebApp", web_app=WebAppInfo(url="https://privateone-one-stream.hf.space/appV2/home"))]
+            [KeyboardButton("Open WebApp", web_app=WebAppInfo(url=config.WEBAPP_URI))]
         ],
         resize_keyboard=True  # Optional: resize the keyboard to fit the screen
     )
