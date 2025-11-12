@@ -48,4 +48,4 @@ pytubefix
 websockets
 faster_whisper
 numpy
-huggingface_hub[hf_xet]
+#huggingface_hub[hf_xet]
