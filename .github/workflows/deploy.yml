@@ -30,5 +30,8 @@ jobs:
       # - name: Push and Deploy to Defang Playground
       #   run: |
       #     defang deploy --name onestream --playground
+      - name : Remove previous deplloy
+        run: defang compose down --file docker-compose.yaml
+
       - name: Push and Deploy to Defang Playground
-        run: defang compose up -v --detach
+        run: defang compose up --file docker-compose.yaml --name onestream -v --detach
