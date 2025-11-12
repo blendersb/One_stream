@@ -6,22 +6,35 @@ services:
       context: .
       dockerfile: Dockerfile
 
-    # Port mapping for Defang Playground
+    # Defang-specific ingress mapping
     ports:
       - mode: ingress
-        target: 7860  # The EXPOSE port in your Dockerfile
+        target: 7860  # Match the EXPOSE port in your Dockerfile
 
-    # Ensure the container stays up
+    # Always restart the app unless stopped manually
     restart: unless-stopped
 
-    # Set working directory (matches Dockerfile)
+    # Match the working directory from your Dockerfile
     working_dir: /app
 
+    # Resource constraints (Defang supports these)
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
+
+    # Optional: Set environment variables here
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    # Optional: Healthcheck (for Playground uptime monitoring)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
     # If your app needs privileged access (for VPN or TUN device)
     # ⚠️ Playground may not support this — but keep for local/docker desktop testing
