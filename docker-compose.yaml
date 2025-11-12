@@ -25,8 +25,8 @@ services:
           memory: 512M
 
     # Optional: Set environment variables here
-    environment:
-      - PYTHONUNBUFFERED=1
+    # environment:
+    #   - PYTHONUNBUFFERED=1
 
     # Optional: Healthcheck (for Playground uptime monitoring)
     healthcheck:
