@@ -1,5 +1,5 @@
 #FROM dperson/openvpn-client
-FROM nikolaik/python-nodejs:python3.9-nodejs18
+FROM nikolaik/python-nodejs:python3.11-nodejs20
 RUN apt-get update -y && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends ffmpeg \
     && apt-get install -y openvpn \
