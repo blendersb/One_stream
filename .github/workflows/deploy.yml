@@ -25,10 +25,10 @@ jobs:
         
       - name: Build Docker image
         run: |
-          docker build -t One_Stream .
+          docker build -t onestream .
 
       - name: Push and Deploy to Defang Playground
         run: |
-          defang deploy --name One_Stream --playground
+          defang deploy --name onestream --playground
       # - name: Push and Deploy to Defang Playground
       #   run: defang compose up -v --detach
