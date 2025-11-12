@@ -22,7 +22,7 @@ services:
       resources:
         limits:
           cpus: "1.0"
-          memory: 1024M
+          memory: 1G
 
     # Optional: Set environment variables here
     # environment:
