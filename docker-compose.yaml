@@ -29,12 +29,12 @@ services:
     #   - PYTHONUNBUFFERED=1
 
     # Optional: Healthcheck (for Playground uptime monitoring)
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7860/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:7860/health" ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 15s
 
     # If your app needs privileged access (for VPN or TUN device)
     # ⚠️ Playground may not support this — but keep for local/docker desktop testing
