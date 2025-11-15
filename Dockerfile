@@ -8,13 +8,14 @@ RUN apt-get update -y && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
-RUN useradd -m botuser
+RUN useradd -u 10001 -m botuser
+
 
 # Set working directory
 WORKDIR /app
 
 # Copy app code and VPN scripts
-COPY --chown=botuser:botuser . /app
+COPY --chown=10001:10001 . /app
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir --upgrade --requirement requirements.txt
