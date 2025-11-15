@@ -9,13 +9,11 @@
 import os
 import asyncio
 import importlib
-import logging
-import signal
 import sys
 from aiohttp import web
 from pyrogram import idle
 from pytgcalls.exceptions import NoActiveGroupCall
-
+import signal
 import config
 from config import BANNED_USERS
 from YukkiMusic import LOGGER, app, userbot
@@ -24,163 +22,170 @@ from YukkiMusic.core.call import Yukki
 from YukkiMusic.plugins import ALL_MODULES
 from YukkiMusic.utils.database import get_banned_users, get_gbanned
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 
-# Initialize event loop
+#loop = asyncio.get_event_loop()
 global loop
 try:
     loop = asyncio.get_event_loop()
-except RuntimeError:
+    
+except RuntimeError:  # no running event loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+
 
 server = web.AppRunner(web_server())
 
 async def init():
-    """Initialize the bot and start services."""
     await server.setup()
-    await web.TCPSite(server, '0.0.0.0', 7860).start()
-    LOGGER("YukkiMusic").info("------------------------------ Web Server Started ------------------------------")
-
-    if not config.STRING1 and not config.STRING2 and not config.STRING3 and not config.STRING4 and not config.STRING5:
-        LOGGER("YukkiMusic").error("No Assistant Clients Vars Defined! Exiting Process.")
+    await web.TCPSite(server,'0.0.0.0', 7860).start()
+    print("------------------------------Web Server Started ------------------------------")
+    
+    if (
+        not config.STRING1
+        and not config.STRING2
+        and not config.STRING3
+        and not config.STRING4
+        and not config.STRING5
+    ):
+        LOGGER("YukkiMusic").error(
+            "No Assistant Clients Vars Defined!.. Exiting Process."
+        )
         return
-
-    if not config.SPOTIFY_CLIENT_ID or not config.SPOTIFY_CLIENT_SECRET:
-        LOGGER("YukkiMusic").warning("No Spotify Vars defined. Your bot won't be able to play Spotify queries.")
-
-    await add_banned_users()
+    if (
+        not config.SPOTIFY_CLIENT_ID
+        and not config.SPOTIFY_CLIENT_SECRET
+    ):
+        LOGGER("YukkiMusic").warning(
+            "No Spotify Vars defined. Your bot won't be able to play spotify queries."
+        )
+    try:
+        users = await get_gbanned()
+        for user_id in users:
+            BANNED_USERS.add(user_id)
+        users = await get_banned_users()
+        for user_id in users:
+            BANNED_USERS.add(user_id)
+    except:
+        pass
     await app.start()
-
-    # Dynamically import all modules
-    await import_modules()
-
-    await userbot.start()
-    await Yukki.start()
-
-    try:
-        await Yukki.stream_call("http://docs.evostream.com/sample_content/assets/sintel1m720p.mp4")
-    except NoActiveGroupCall:
-        LOGGER("YukkiMusic").error("Please turn on your Logger Group's Voice Call. Make sure you never close/end the voice call.")
-        sys.exit(1)
-    except Exception as e:
-        LOGGER("YukkiMusic").exception("Error starting call: %s", e)
-
-    LOGGER("YukkiMusic").info("Yukki Music Bot Started Successfully")
-    await idle()
-
-async def add_banned_users():
-    """Add banned users to the global banned list."""
-    try:
-        gbanned_users = await get_gbanned()
-        for user_id in gbanned_users:
-            BANNED_USERS.add(user_id)
-
-        banned_users = await get_banned_users()
-        for user_id in banned_users:
-            BANNED_USERS.add(user_id)
-    except Exception as e:
-        LOGGER("YukkiMusic").exception("Error adding banned users: %s", e)
-
-async def import_modules():
-    """Dynamically import all modules."""
     clean_modules = [m.lstrip(".") for m in ALL_MODULES if isinstance(m, str) and m.strip()]
     for module in clean_modules:
-        full_name = f"YukkiMusic.plugins.{module}" if not module.startswith("YukkiMusic.plugins") else module
+        # If module already contains the package prefix, avoid double-prefixing
+        if module.startswith("YukkiMusic.plugins"):
+            full_name = module
+        else:
+            full_name = f"YukkiMusic.plugins.{module}"
+
         try:
             importlib.import_module(full_name)
             LOGGER("YukkiMusic.plugins").info("Imported: %s", full_name)
         except Exception as e:
+            # Log exception but continue loading remaining plugins
             LOGGER("YukkiMusic.plugins").exception("Failed importing %s: %s", full_name, e)
+    LOGGER("YukkiMusic.plugins").info("Finished importing modules")
+    '''
+    for all_module in ALL_MODULES:
+        importlib.import_module("YukkiMusic.plugins" + all_module)
+    LOGGER("Yukkimusic.plugins").info(
+        "Successfully Imported Modules "
+    )'''
+    
+    await userbot.start()
+    await Yukki.start()
+    
+    try:
+        await Yukki.stream_call(
+            "http://docs.evostream.com/sample_content/assets/sintel1m720p.mp4"
+        )
+    except NoActiveGroupCall:
+        LOGGER("YukkiMusic").error(
+            "[ERROR] - \n\nPlease turn on your Logger Group's Voice Call. Make sure you never close/end voice call in your log group"
+        )
+        sys.exit()
+    except Exception as e:
+        print(e)
+        
+    #await Yukki.decorators()
+    LOGGER("YukkiMusic").info("Yukki Music Bot Started Successfully")
+    
+    
+    await idle()
 
 async def cleanup():
     """Gracefully stop all running services."""
-    LOGGER("YukkiMusic").info("------------------ Stopping Services -----------------")
-    
+    print("\n------------------ Stopping Services -----------------")
     if server and server.sites:
-        LOGGER("YukkiMusic").info("Stopping web server...")
+        print("Stopping web server...")
         await server.cleanup()
-        LOGGER("YukkiMusic").info("Web server stopped.")
-    
-    LOGGER("YukkiMusic").info("Stopping clients...")
+        print("Web server stopped.")
+
+    print("Stopping clients...")
     if app.is_initialized:
         await app.stop()
-        LOGGER("YukkiMusic").info("Main client stopped.")
-    await userbot.stop()
-
-    # Cancel any remaining asyncio tasks
+        print("Main client stopped.")
+        #await Yukki.stop()
+        #userbot.leave_chat(message.chat.id)
+        print("User bot stopped.")
+        await userbot.stop()
+    
+    
+    # Stop all asyncio tasks
     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
     for task in tasks:
-        task.cancel()
-
-    LOGGER("YukkiMusic").info("All tasks cancelled.")
+        task.cancel()  
+    
+    print("All tasks cancelled.")
     await asyncio.gather(*tasks, return_exceptions=True)
-
     if loop.is_running():
         loop.stop()
-async def cleanup_and_shutdown():
-    """Gracefully stop all running services."""
-    try:
-        if loop.is_running():
-            await cleanup()  # Call the cleanup function asynchronously
-            await loop.shutdown_asyncgens()  # Shutdown async generators
-    except Exception as e:
-        LOGGER("YukkiMusic").exception(f"Error during cleanup: {e}")
-    finally:
-        # Ensure the loop is closed if not already closed
-        if not loop.is_closed():
-            loop.close()
-        LOGGER("YukkiMusic").info("Application closed.")
-        sys.exit(0)  # Ensure clean exit
+# async def restart_program():
+#     """Perform a graceful restart."""
+#     print("\n------------------ Restarting Program ------------------")
+#     await cleanup()
+#     python = sys.executable
+#     os.execl(python, python, *sys.argv)  # Replace current process
 
-def run_cleanup():
-    """Run cleanup asynchronously."""
-    asyncio.ensure_future(cleanup_and_shutdown())
-async def restart_program():
-    """Perform a graceful restart of the bot."""
-    LOGGER("YukkiMusic").info("------------------ Restarting Program ------------------")
-    await cleanup()
-    python = sys.executable
-    os.execl(python, python, *sys.argv)  # Replace current process
 
-def handle_signal(signum, frame):
-    """Handle system signals for restart or termination."""
-    restart_signals = [getattr(signal, s) for s in ["SIGHUP", "SIGUSR1", "SIGUSR2"] if hasattr(signal, s)]
-    
-    if signum in restart_signals:
-        LOGGER("YukkiMusic").info(f"Received signal {signum} — performing hot restart...")
-        asyncio.run(restart_program())
-    elif signum in (signal.SIGINT, signal.SIGTERM):
-        LOGGER("YukkiMusic").info(f"Received termination signal ({signum}) — shutting down gracefully...")
-        asyncio.run(cleanup())
-        sys.exit(0)
-
+# def handle_signal(signum, frame):
+#     """Handle Unix signals for restart or shutdown."""
+#     if signum in (signal.SIGHUP, signal.SIGUSR1, signal.SIGUSR2):
+#         logging.info(f"Received signal {signum} — performing hot restart...")
+#         asyncio.run(restart_program())
+#     elif signum in (signal.SIGINT, signal.SIGTERM):
+#         logging.info(f"Received termination signal ({signum}) — shutting down gracefully...")
+#         asyncio.run(cleanup())
+#         sys.exit(0)
 if __name__ == "__main__":
+    #keep_alive()
+    
+    '''loop.run_until_complete(init())
+    LOGGER("YukkiMusic").info("Stopping Yukki Music Bot! GoodBye")'''
     # Register signal handlers
-    for sig_name in ["SIGHUP", "SIGUSR1", "SIGUSR2", "SIGTERM", "SIGINT"]:
-        if hasattr(signal, sig_name):
-            signal.signal(getattr(signal, sig_name), handle_signal)
-
+    # signal.signal(signal.SIGHUP, handle_signal)
+    # signal.signal(signal.SIGUSR1, handle_signal)
+    # signal.signal(signal.SIGUSR2, handle_signal)
+    # signal.signal(signal.SIGTERM, handle_signal)
+    # signal.signal(signal.SIGINT, handle_signal)
     try:
         loop.run_until_complete(init())
+        #loop.run_forever()
     except (KeyboardInterrupt, SystemExit):
-        LOGGER("YukkiMusic").info("------------------------ Services Stopped ------------------------")
+        print("------------------------ Services Stopped ------------------------")
+        
     except Exception as e:
-        LOGGER("YukkiMusic").exception(f"An unexpected error occurred: {e}")
+        LOGGER("YukkiMusic").info(f"Stopping Yukki Music Bot! GoodBye--{e}")
+        print(e)
+        #LOGGER(f"An unexpected error occurred: {e}", exc_info=True)
     finally:
-        # Ensure cleanup is run after everything
-        run_cleanup()
-        # try:
-        #     # Check if the loop is still running before attempting cleanup or shutdown
-        #     if loop.is_running():
-        #         await cleanup()
-        #         await loop.shutdown_asyncgens()
-        # except Exception as e:
-        #     LOGGER("YukkiMusic").exception(f"Error during cleanup: {e}")
-        # finally:
-        #     # Ensure the loop is closed if not already closed
-        #     if not loop.is_closed():
-        #         loop.close()
-        #     LOGGER("YukkiMusic").info("Application closed.")
-        #     sys.exit(0)  # Ensure clean exit
+        try:
+            # Run cleanup safely
+            loop.run_until_complete(cleanup())
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        except Exception as e:
+            print("Error while running cleanup in finally:", e)
+        finally:
+            if not loop.is_closed():
+                loop.close()
+            print("Application closed.")
+            sys.exit(0)   # <-- Clean exit
+            #os._exit(0)
