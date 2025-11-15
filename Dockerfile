@@ -13,23 +13,18 @@ RUN useradd -u 10001 -m botuser
 
 # Set working directory
 WORKDIR /app
-#RUN chmod +x app/start_vpn.sh
 
-# Run the VPN script when the container starts
+# Copy app code and VPN scripts
+COPY --chown=10001:10001 . /app
 
-COPY vpnbook /vpnbook
-COPY start_vpn.sh /start_vpn.sh
-RUN chmod +x /start_vpn.sh
-
-# Create /dev/net directory and /dev/net/tun device
-#RUN mkdir -p /dev/net && \
-    #mknod /dev/net/tun c 10 200 && \
-    #chmod 600 /dev/net/tun
-
-
+# Install Python dependencies
 RUN pip3 install --no-cache-dir --upgrade --requirement requirements.txt
 
 # Expose your port
 EXPOSE 7860
-#CMD ["sh","/start_vpn.sh"]
-CMD ["python", "-u","-m", "YukkiMusic"]
+
+# Switch to non-root user
+USER 10001
+
+# Run your bot
+CMD ["python", "-u", "-m", "YukkiMusic"]
