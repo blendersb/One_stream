@@ -12,14 +12,14 @@ from pytgcalls.types import ChatUpdate
 from pyrogram.errors import UserPrivacyRestricted, Timeout
 from YukkiMusic.core.call import Yukki
 from YukkiMusic import userbot , app
-from YukkiMusic.utils.AI import AIModel
+#from YukkiMusic.utils.AI import AIModel
 
 UserBotOne=userbot.one
 AssistanceOne=Yukki.one
 test_stream = 'http://docs.evostream.com/sample_content/assets/' \
               'sintel1m720p.mp4'
 AUDIO_QUALITY = AudioQuality.HIGH
-model = AIModel(AUDIO_QUALITY)
+#model = AIModel(AUDIO_QUALITY)
 
 
 @app.on_message(filters.regex('/call'))
@@ -47,27 +47,27 @@ async def stop_handler(_: Client, message: Message):
         message.chat.id,
     )
 
-@app.on_message(filters.regex('/ai'))
-async def AI_handler(_: Client, message:Message):
-    await AssistanceOne.record(
-    message.chat.id,
-    RecordStream(
-        True,
-        AUDIO_QUALITY,
-    ),
-)
+# @app.on_message(filters.regex('/ai'))
+# async def AI_handler(_: Client, message:Message):
+#     await AssistanceOne.record(
+#     message.chat.id,
+#     RecordStream(
+#         True,
+#         AUDIO_QUALITY,
+#     ),
+# )
 
-@AssistanceOne.on_update(
-    fl.stream_frame(
-        Direction.INCOMING,
-        Device.MICROPHONE,
-    ),
-)
-async def audio_data(_: PyTgCalls, update: StreamFrames):
-    # Transcribe just one user
-    stt = model.transcribe(update.frames[0].frame)
-    if stt:
-        print(stt, flush=True)   
+# @AssistanceOne.on_update(
+#     fl.stream_frame(
+#         Direction.INCOMING,
+#         Device.MICROPHONE,
+#     ),
+# )
+# async def audio_data(_: PyTgCalls, update: StreamFrames):
+#     # Transcribe just one user
+#     stt = model.transcribe(update.frames[0].frame)
+#     if stt:
+#         print(stt, flush=True)   
 
 
 @AssistanceOne.on_update(fl.chat_update(ChatUpdate.Status.INCOMING_CALL))

@@ -9,6 +9,8 @@
 import os
 import asyncio
 import importlib
+import logging
+
 import sys
 from aiohttp import web
 from pyrogram import idle
@@ -22,7 +24,7 @@ from YukkiMusic.core.call import Yukki
 from YukkiMusic.plugins import ALL_MODULES
 from YukkiMusic.utils.database import get_banned_users, get_gbanned
 
-
+logging.basicConfig(level=logging.INFO)
 #loop = asyncio.get_event_loop()
 global loop
 try:
@@ -148,8 +150,11 @@ async def restart_program():
 
 def handle_signal(signum, frame):
     """Handle Unix signals for restart or shutdown."""
-    if signum in (signal.SIGHUP, signal.SIGUSR1, signal.SIGUSR2):
-        logging.info(f"Received signal {signum} — performing hot restart...")
+    if signum in getattr(signal, "SIGHUP", ()):
+        logging.info(f"Received SIGHUP ({signum}) — performing hot restart...")
+        asyncio.run(restart_program())
+    elif signum in getattr(signal, "SIGUSR1", ()) or signum in getattr(signal, "SIGUSR2", ()):
+        logging.info(f"Received user-defined signal ({signum}) — performing hot restart...")
         asyncio.run(restart_program())
     elif signum in (signal.SIGINT, signal.SIGTERM):
         logging.info(f"Received termination signal ({signum}) — shutting down gracefully...")
@@ -161,11 +166,10 @@ if __name__ == "__main__":
     '''loop.run_until_complete(init())
     LOGGER("YukkiMusic").info("Stopping Yukki Music Bot! GoodBye")'''
     # Register signal handlers
-    signal.signal(signal.SIGHUP, handle_signal)
-    signal.signal(signal.SIGUSR1, handle_signal)
-    signal.signal(signal.SIGUSR2, handle_signal)
-    signal.signal(signal.SIGTERM, handle_signal)
-    signal.signal(signal.SIGINT, handle_signal)
+    for sig_name in ["SIGHUP", "SIGUSR1", "SIGUSR2", "SIGTERM", "SIGINT"]:
+        if hasattr(signal, sig_name):
+            signal.signal(getattr(signal, sig_name), handle_signal)
+
     try:
         loop.run_until_complete(init())
         #loop.run_forever()

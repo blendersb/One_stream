@@ -3,7 +3,7 @@ name: Deploy to Defang Playground
 on:
   push:
     branches:
-      - main  # or your preferred branch
+      - master  # or your preferred branch
 
 jobs:
   deploy:
