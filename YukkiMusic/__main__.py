@@ -149,17 +149,15 @@ async def restart_program():
 
 
 def handle_signal(signum, frame):
-    """Handle Unix signals for restart or shutdown."""
-    if signum in getattr(signal, "SIGHUP", ()):
-        logging.info(f"Received SIGHUP ({signum}) — performing hot restart...")
-        asyncio.run(restart_program())
-    elif signum in getattr(signal, "SIGUSR1", ()) or signum in getattr(signal, "SIGUSR2", ()):
-        logging.info(f"Received user-defined signal ({signum}) — performing hot restart...")
+    restart_signals = [getattr(signal, s) for s in ["SIGHUP", "SIGUSR1", "SIGUSR2"] if hasattr(signal, s)]
+    if signum in restart_signals:
+        logging.info(f"Received signal {signum} — performing hot restart...")
         asyncio.run(restart_program())
     elif signum in (signal.SIGINT, signal.SIGTERM):
         logging.info(f"Received termination signal ({signum}) — shutting down gracefully...")
         asyncio.run(cleanup())
         sys.exit(0)
+
 if __name__ == "__main__":
     #keep_alive()
     
