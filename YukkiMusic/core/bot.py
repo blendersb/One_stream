@@ -3,15 +3,23 @@ import os
 import tempfile
 import shutil
 import logging
+import asyncio
 from pyrogram import Client
 from pyrogram.types import BotCommand
 import config  # your config.py
 
-log = logging.getLogger(__name__)
+# ---------- Logger Setup ----------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+log = logging.getLogger("YukkiBot")
 
-def resolve_session_dir(default_rel="./sessions", app_name="YukkiBot"):
+# ---------- Session Directory ----------
+def resolve_session_dir(default_rel="/tmp/YukkiBot", app_name="YukkiBot"):
     """
-    Resolve a writable sessions folder for Pyrogram.
+    Resolve a writable session folder for Pyrogram.
     Returns absolute folder path.
     """
     original = os.path.abspath(default_rel)
@@ -48,9 +56,10 @@ def resolve_session_dir(default_rel="./sessions", app_name="YukkiBot"):
     log.info("Using fallback sessions dir: %s", fallback)
     return fallback
 
-
+# ---------- Bot Class ----------
 class YukkiBot(Client):
     def __init__(self):
+        # Resolve session directory
         session_path = resolve_session_dir()
         session_file = os.path.join(session_path, "YukkiMusicBot.session")
         log.info(f"Starting Bot with session: {session_file}")
@@ -67,16 +76,16 @@ class YukkiBot(Client):
         me = await self.get_me()
         self.username = me.username
         self.id = me.id
+
+        # Send startup message
         try:
-            await self.send_message(config.LOG_GROUP_ID, "Bot Started")
+            await self.send_message(config.LOG_GROUP_ID, "Bot Started ✅")
         except Exception:
-            log.error(
-                "Bot cannot access the log group. Add it and promote as admin!"
-            )
-            sys.exit()
+            log.error("Cannot access log group. Add bot to log channel & promote as admin!")
+            sys.exit(1)
 
         # Set bot commands
-        if config.SET_CMDS == "True":
+        if str(config.SET_CMDS).lower() == "true":
             try:
                 await self.set_bot_commands([
                     BotCommand("start","Start the bot"),
@@ -92,13 +101,22 @@ class YukkiBot(Client):
                     BotCommand("playmode","Change default playmode"),
                     BotCommand("settings","Open bot settings"),
                 ])
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning(f"Failed to set bot commands: {e}")
 
         # Store full name
-        if me.last_name:
-            self.name = f"{me.first_name} {me.last_name}"
-        else:
-            self.name = me.first_name
+        self.name = f"{me.first_name} {me.last_name}" if me.last_name else me.first_name
+        log.info(f"MusicBot Started as {self.name} (@{self.username})")
 
-        log.info(f"MusicBot Started as {self.name}")
+# ---------- Main ----------
+async def main():
+    bot = YukkiBot()
+    await bot.start()
+    log.info("Bot is now running. Press Ctrl+C to stop.")
+    await asyncio.Event().wait()  # Keep running
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        log.info("Bot stopped manually.")
