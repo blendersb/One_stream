@@ -14,9 +14,13 @@ RUN useradd -u 10001 -m botuser
 # Set working directory
 WORKDIR /app
 
+RUN mkdir -p /app/sessions && \
+    chmod -R 777 /app && \
+    chmod -R 777 /app/sessions && \
+    chown -R botuser:botuser /app /app/sessions
+
 # Copy app code and VPN scripts
-COPY --chown=10001:10001 . /app
-RUN mkdir -p /app/sessions && chmod -R 777 /app/sessions
+COPY --chown=botuser:botuser . /app
 # Install Python dependencies
 RUN pip3 install --no-cache-dir --upgrade --requirement requirements.txt
 
